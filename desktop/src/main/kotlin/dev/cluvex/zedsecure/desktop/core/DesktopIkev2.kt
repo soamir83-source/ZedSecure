@@ -84,7 +84,25 @@ class DesktopIkev2(
             |    rasdial ${'$'}name /disconnect | Out-Null
             |    Remove-VpnConnection -Name ${'$'}name -Force
             |  }
-            |  Add-VpnConnection -Name ${'$'}name -ServerAddress ${'$'}env:ZS_SERVER -TunnelType Ikev2 -EncryptionLevel Required -AuthenticationMethod Eap -RememberCredential -Force
+            |  [xml]${'$'}eap = @'
+            |<EapHostConfig xmlns="http://www.microsoft.com/provisioning/EapHostConfig">
+            |  <EapMethod>
+            |    <Type xmlns="http://www.microsoft.com/provisioning/EapCommon">26</Type>
+            |    <VendorId xmlns="http://www.microsoft.com/provisioning/EapCommon">0</VendorId>
+            |    <VendorType xmlns="http://www.microsoft.com/provisioning/EapCommon">0</VendorType>
+            |    <AuthorId xmlns="http://www.microsoft.com/provisioning/EapCommon">0</AuthorId>
+            |  </EapMethod>
+            |  <Config xmlns="http://www.microsoft.com/provisioning/EapHostConfig">
+            |    <Eap xmlns="http://www.microsoft.com/provisioning/BaseEapConnectionPropertiesV1">
+            |      <Type>26</Type>
+            |      <EapType xmlns="http://www.microsoft.com/provisioning/MsChapV2ConnectionPropertiesV1">
+            |        <UseWinLogonCredentials>false</UseWinLogonCredentials>
+            |      </EapType>
+            |    </Eap>
+            |  </Config>
+            |</EapHostConfig>
+            |'@
+            |  Add-VpnConnection -Name ${'$'}name -ServerAddress ${'$'}env:ZS_SERVER -TunnelType Ikev2 -EncryptionLevel Required -AuthenticationMethod Eap -EapConfigXmlStream ${'$'}eap -RememberCredential -Force
             |  Set-VpnConnectionIPsecConfiguration -ConnectionName ${'$'}name -AuthenticationTransformConstants ${esp.windowsAuth} -CipherTransformConstants ${esp.windowsEspCipher} -EncryptionMethod ${ike.windowsCipher} -IntegrityCheckMethod ${ike.windowsIntegrity} -DHGroup ${ike.windowsDh} -PfsGroup None -Force
             |  ${'$'}ErrorActionPreference = 'Continue'
             |  rasdial ${'$'}name ${'$'}env:ZS_USER ${'$'}env:ZS_PASS
